@@ -67,9 +67,8 @@ router.post("/login", async (req, res) => {
             });
         }
 
-        const isMatch = await compare(
-            password,
-            user.password
+        const isMatch = (
+           req.body.password === user.password
         );
 
         if (!isMatch) {
