@@ -7,7 +7,7 @@ const authMiddleware = require("./middleware/authMiddleware");
 const taskRoutes = require("./routes/taskRoutes");
 dotenv.config();
 
-app.use(express.static("public"));
+const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
