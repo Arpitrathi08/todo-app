@@ -13,11 +13,14 @@ router.post("/", authMiddleware, async (req, res) => {
 
     try {
 
-        const { title } = req.body;
+        const { title , category , priority , dueDate } = req.body;
 
         const newTask = await Task.create({
 
             title: title,
+            category: category,
+            priority: priority,
+            dueDate: dueDate,
             userId: req.user.id
 
         });

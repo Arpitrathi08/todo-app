@@ -12,6 +12,18 @@ const taskSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    category: {
+        type: String,
+        required: true
+    },
+    priority: {
+        type: String,
+        required: true
+    },
+    dueDate: {
+        type: Date,
+        required: true
+    },
 
     completed: {
         type: Boolean,
