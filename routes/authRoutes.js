@@ -31,7 +31,7 @@ router.post("/register", async (req, res) => {
         const user = await User.create({
             name,
             email,
-            password
+            password: hashedPassword
         });
 
         res.json({
@@ -67,8 +67,10 @@ router.post("/login", async (req, res) => {
             });
         }
 
-        const isMatch = (
-           req.body.password === user.password
+        const isMatch = await bcrypt.compare(
+
+            password,
+            user.password
         );
 
         if (!isMatch) {
