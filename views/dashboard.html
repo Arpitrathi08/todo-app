@@ -1,0 +1,393 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Task Dashboard</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial;
+}
+
+body{
+    background:#0f172a;
+    color:white;
+    min-height:100vh;
+    padding:30px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:25px;
+    font-size:40px;
+}
+
+.top-bar{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+
+input,select{
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    outline:none;
+    flex:1;
+}
+
+button{
+    padding:12px 18px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    transition:0.3s;
+    font-weight:bold;
+}
+
+.add-btn{
+    background:#22c55e;
+    color:white;
+}
+
+.logout-btn{
+    background:#ef4444;
+    color:white;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+.task-container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+}
+
+.task-card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.3);
+    animation:fadeIn 0.4s ease;
+}
+
+.task-card h3{
+    margin-bottom:10px;
+}
+
+.task-card p{
+    margin:5px 0;
+    color:#cbd5e1;
+}
+
+.completed{
+    text-decoration:line-through;
+    opacity:0.6;
+}
+
+.card-buttons{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+
+.done-btn{
+    background:#3b82f6;
+    color:white;
+}
+
+.delete-btn{
+    background:#ef4444;
+    color:white;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+@media(max-width:600px){
+
+    .top-bar{
+        flex-direction:column;
+    }
+
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>
+    <i class="fa-solid fa-list-check"></i>
+    My Tasks
+</h1>
+
+<div class="top-bar">
+
+    <input
+        type="text"
+        id="taskInput"
+        placeholder="Enter task"
+    >
+
+    <input
+        type="date"
+        id="dueDate"
+    >
+
+    <select id="priority">
+
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+
+    </select>
+
+    <input
+        type="text"
+        id="category"
+        placeholder="Category"
+    >
+
+    <button class="add-btn" onclick="addTask()">
+
+        <i class="fa-solid fa-plus"></i>
+        Add
+
+    </button>
+
+    <button class="logout-btn" id="logoutBtn">
+
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Logout
+
+    </button>
+
+</div>
+
+<input
+    type="text"
+    id="searchInput"
+    placeholder="Search tasks..."
+    onkeyup="loadTasks()"
+    style="width:100%;margin-bottom:20px;"
+>
+
+<div class="task-container" id="taskList"></div>
+
+</div>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+if(!token){
+    window.location.href="/login";
+}
+
+async function loadTasks(){
+
+    try{
+
+        const res = await fetch("/api/tasks",{
+
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+
+        });
+
+        const tasks = await res.json();
+
+        const taskList = document.getElementById("taskList");
+
+        const search =
+        document.getElementById("searchInput")
+        .value.toLowerCase();
+
+        taskList.innerHTML="";
+
+        tasks
+        .filter(task =>
+            task.title.toLowerCase().includes(search)
+        )
+        .forEach(task=>{
+
+            taskList.innerHTML += `
+
+            <div class="task-card">
+
+                <h3 class="${task.completed ? "completed" : ""}">
+
+                    ${task.title}
+
+                </h3>
+
+                <p>
+                    <i class="fa-solid fa-calendar"></i>
+                    Due: ${task.dueDate || "Not set"}
+                </p>
+
+                <p>
+                    <i class="fa-solid fa-layer-group"></i>
+                    Category: ${task.category || "General"}
+                </p>
+
+                <p>
+                    <i class="fa-solid fa-flag"></i>
+                    Priority: ${task.priority || "Low"}
+                </p>
+
+                <div class="card-buttons">
+
+                    <button
+                    class="done-btn"
+                    onclick="toggleTask('${task._id}')">
+
+                        ${task.completed ? "Undo" : "Done"}
+
+                    </button>
+
+                    <button
+                    class="delete-btn"
+                    onclick="deleteTask('${task._id}')">
+
+                        Delete
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            `;
+
+        });
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+}
+
+
+async function addTask(){
+
+    const title =
+    document.getElementById("taskInput").value;
+
+    const dueDate =
+    document.getElementById("dueDate").value;
+
+    const priority =
+    document.getElementById("priority").value;
+
+    const category =
+    document.getElementById("category").value;
+
+    await fetch("/api/tasks",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json",
+            Authorization:`Bearer ${token}`
+        },
+
+        body:JSON.stringify({
+            title,
+            dueDate,
+            priority,
+            category
+        })
+
+    });
+
+    document.getElementById("taskInput").value="";
+
+    loadTasks();
+
+}
+
+
+async function deleteTask(id){
+
+    await fetch(`/api/tasks/${id}`,{
+
+        method:"DELETE",
+
+        headers:{
+            Authorization:`Bearer ${token}`
+        }
+
+    });
+
+    loadTasks();
+
+}
+
+
+async function toggleTask(id){
+
+    await fetch(`/api/tasks/${id}`,{
+
+        method:"PUT",
+
+        headers:{
+            Authorization:`Bearer ${token}`
+        }
+
+    });
+
+    loadTasks();
+
+}
+
+
+document.getElementById("logoutBtn")
+.addEventListener("click",()=>{
+
+    localStorage.removeItem("token");
+
+    window.location.href="/login";
+
+});
+
+loadTasks();
+
+</script>
+
+</body>
+</html>
+
